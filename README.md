@@ -3,6 +3,10 @@
 Chatbot_streamlit is a simple web application for chatting with an LLM model running in Ollama using Langchain to consume the Ollama API endpoint.
 The promt created with Langchain for the chatbot adds memory to chatbot using Streamlit SessionState.
 
+![chat_bot_streamlit](Ollamachatbot.jpg)
+
+
+
 ## Installation
 
 Clone this repository [chatbot_streamlit](https://github.com/andresvercesi/chatbot_streamlit).
