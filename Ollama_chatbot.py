@@ -24,12 +24,13 @@ if request_models.status_code==200:
         model_list.append((request_models['models'][i]['name']))
 
 model = st.sidebar.selectbox("Select Model", model_list) #Select box for model selection
-if model and ('model_set' not in st.session_state):
+if model:
     #Define model settings
     llm_model = Ollama(base_url=ollama_endpoint, model=model) 
     #Create a prompt for ChatBot configuration and memory
-    prompt_template = """You are a chatbot based on a LLM, always try to answer in the same language.
-    In the chat history you are 'assistan' an the human is 'user'
+    prompt_template = """You are a chatbot based on a LLM, always try to answer question in the same language 
+    of the user.
+    In the chat history you are 'assistant' and the human is 'user'
     The chat history before the last question is:
     {chat_history}
     And the last question is:
@@ -42,7 +43,7 @@ if model and ('model_set' not in st.session_state):
     #Create the chain for LangChain
     chain = prompt | llm_model | StrOutputParser()
     st.session_state.model_set = True
-    print('Model set')
+    #print(f'Model set {model}')
 
 st.title("💬 Ollama LLM Chatbot")
 
@@ -60,13 +61,12 @@ for msg in st.session_state.messages:
 def generate_response(question):
     response = chain.invoke({'chat_history':st.session_state['messages'],
                              'question':question})
-    st.session_state.messages.append({"role": "assistant", "content": response})
     return (response)
 
 if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user", avatar="🧑‍💻").write(prompt)
-    st.session_state["full_message"] = ""
-    st.chat_message("assistant", avatar="🤖").write(generate_response(prompt))
-    st.session_state.messages.append({"role": "assistant", "content": st.session_state["full_message"]}) 
-    
+    response = generate_response(prompt)
+    st.session_state.messages.append({"role": "assistant", "content": response})
+    st.chat_message("assistant", avatar="🤖").write(response)
+
