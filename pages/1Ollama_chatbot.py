@@ -6,31 +6,20 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 
 
-#Input Ollama server endpoint address
-ollama_endpoint = st.sidebar.text_input('Ollama address endpoint',
-                                        value='http://localhost:11434',
-                                        help="Ollama API IP address") 
+st.title("💬 Ollama LLM Chatbot")
+if "chatbot_config" not in st.session_state:
+    st.session_state.chatbot_config = False
 
-# Define a empty list for available models
-model_list = [] 
+#Set config variables from SessionState
 
-#Select the model to use
-#Request installed models
-request_models = requests.get(ollama_endpoint+"/api/tags") #Request to Ollama API to get models
-if request_models.status_code==200:
-    request_models = request_models.json()
-#Save model names
-    for i in range(len(request_models['models'])):
-        model_list.append((request_models['models'][i]['name']))
-
-model = st.sidebar.selectbox("Select Model", model_list) #Select box for model selection
-if model:
+if "ollama_endpoint" in st.session_state and "model" in st.session_state:
+    ollama_endpoint = st.session_state.ollama_endpoint
+    model = st.session_state.model
     #Define model settings
     llm_model = Ollama(base_url=ollama_endpoint, model=model) 
     #Create a prompt for ChatBot configuration and memory
     prompt_template = """You are a chatbot based on a LLM, always try to answer question in the same language 
-    of the user.
-    In the chat history you are 'assistant' and the human is 'user'
+    of the user. In the chat history you are 'assistant' and the human is 'user'
     The chat history before the last question is:
     {chat_history}
     And the last question is:
@@ -42,12 +31,11 @@ if model:
                             )
     #Create the chain for LangChain
     chain = prompt | llm_model | StrOutputParser()
-    st.session_state.model_set = True
+    st.session_state.chatbot_config = True
+    st.text(f'This is a chatbot based on {st.session_state.model} Model')
     #print(f'Model set {model}')
 
-st.title("💬 Ollama LLM Chatbot")
-
-if "messages" not in st.session_state:
+if "messages" not in st.session_state and st.session_state.chatbot_config:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
 ### Write Message History
@@ -69,4 +57,3 @@ if prompt := st.chat_input():
     response = generate_response(prompt)
     st.session_state.messages.append({"role": "assistant", "content": response})
     st.chat_message("assistant", avatar="🤖").write(response)
-
