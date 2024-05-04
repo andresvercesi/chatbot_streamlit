@@ -32,7 +32,6 @@ def response_rag(query:str) ->str:
     <context>
     {context}
     </context>
-    
     If do not information in the context please tell me. Always answer the question in the same language 
     as the question itself.
     Question: {question}
@@ -49,7 +48,7 @@ def response_rag(query:str) ->str:
     chain = ({"context": retriever, "question": RunnablePassthrough()} 
             |prompt
             )
-    #print(chain.invoke(query)) 
+    print(chain.invoke(query)) 
     rag_chain = ({"context": retriever, "question": RunnablePassthrough()} 
                 |prompt 
                 |llm_model 
