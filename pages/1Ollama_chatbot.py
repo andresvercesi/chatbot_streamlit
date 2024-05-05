@@ -16,7 +16,7 @@ if "ollama_endpoint" in st.session_state and "model" in st.session_state:
     ollama_endpoint = st.session_state.ollama_endpoint
     model = st.session_state.model
     #Define model settings
-    llm_model = Ollama(base_url=ollama_endpoint, model=model) 
+    llm_model = Ollama(base_url=ollama_endpoint, model=model, temperature=0.0) 
     #Create a prompt for ChatBot configuration and memory
     prompt_template = """You are a chatbot based on a LLM, always try to answer question in the same language 
     of the user. In the chat history you are 'assistant' and the human is 'user'

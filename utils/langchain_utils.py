@@ -9,7 +9,7 @@ from langchain_community.llms import Ollama
 
 #Define embedding model
 oll_embeddings = OllamaEmbeddings(base_url=st.session_state.ollama_endpoint,
-                                 model='mxbai-embed-large',
+                                 model='znbang/bge:large-en-v1.5-f16',
                                  model_kwargs={"normalize_embeddings": True},
                                  )
 
@@ -17,6 +17,8 @@ llm_model = Ollama(base_url=st.session_state.ollama_endpoint,
                    model=st.session_state.model,
                    temperature=0,
                    )
+
+
 
 def response_rag(query:str) ->str:
     
@@ -44,15 +46,16 @@ def response_rag(query:str) ->str:
         )
 
     #Create a chain 
-    print(query)
+    #print(query)
     chain = ({"context": retriever, "question": RunnablePassthrough()} 
             |prompt
             )
-    print(chain.invoke(query)) 
+    #print(chain.invoke(query)) 
+    print('peticion')
     rag_chain = ({"context": retriever, "question": RunnablePassthrough()} 
                 |prompt 
                 |llm_model 
                 | StrOutputParser()
                 )
-
+    print('resuelto')
     return rag_chain.invoke(query)

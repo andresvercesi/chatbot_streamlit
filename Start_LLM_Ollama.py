@@ -44,6 +44,7 @@ if st.session_state.ollama_is_running:
     for i in range(len(request_models['models'])):
         model_list.append((request_models['models'][i]['name']))
 
+st.session_state.model_list = model_list
 model = st.selectbox("Select one LLM model to use", model_list) #Select box for model selection 
 
 st.session_state.model = model
