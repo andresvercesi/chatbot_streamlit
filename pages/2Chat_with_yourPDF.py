@@ -8,13 +8,16 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_chroma import Chroma
 import os
-from utils.langchain_utils import response_rag
+from utils.langchain_utils import response_rag, search_info
 from utils.rag_utils import load_document
 
 
 
 st.title("Chat with your PDF using RAG")
 st.text(f'The model selected is {st.session_state.model}')
+
+if "rag_config" not in st.session_state:
+    st.session_state['rag_config'] = False
 
 documents_loaded = False
 
@@ -30,8 +33,9 @@ def save_uploaded_file(uploaded_file, path):
 
 #Load the PDF to process
 uploaded_file = st.file_uploader(label="Please upload your Pdf file to process", type=['pdf'])
+
 chunk_size = st.number_input(label='Chunk Size', 
-                            min_value=100, value=400,
+                            min_value=100, value=1000,
                             help='Set size to split documents')
 
 chunk_overlap = st.number_input(label='Chunk Size',
@@ -41,18 +45,22 @@ chunk_overlap = st.number_input(label='Chunk Size',
                                 step = 1,
                                 help='Set size to split documents')
 
-embedding_model = st.selectbox("Select one LLM model to use", st.session_state.model_list) #Select box for model selection 
+#Select embbeding model
+embedding_model = st.selectbox("Select one LLM model to use",st.session_state.model_list) #Select box for model selection 
+if "embedding_model" not in st.session_state:
+    st.session_state['embedding_model'] = embedding_model
+
 #Define embedding model
 oll_embeddings = OllamaEmbeddings(base_url=st.session_state.ollama_endpoint,
                                  model=embedding_model
                                  )
-col1, col2 = st.columns(2)
-with col1:
-    process_document = st.button(label='Process document')
-with col2:
-    process_document2 = st.button(label='Restart RAG')
+
+process_document = st.button(label='Process document', disabled=st.session_state.rag_config)
+restart = st.button(label='Restart', disabled=not(st.session_state.rag_config))
+#restart_rag = st.button(label='Restart RAG', disabled=not(st.session_state.rag_config))
 
 if uploaded_file is not None and process_document:
+    
     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
         tmp_file.write(uploaded_file.getvalue())
         tmp_file_path = tmp_file.name
@@ -72,12 +80,16 @@ if uploaded_file is not None and process_document:
     # Create a vectorstore
     st.session_state.vectorstore = Chroma.from_documents(documents=splits,
                                         embedding=oll_embeddings,
+                                        collection_name=uploaded_file.name[:5]
                                         #persist_directory="./chroma_db"
                                         )
     print('Vector chroma complete')
+    print(st.session_state.rag_config)
     st.session_state.db_created = True
+    st.session_state.rag_config = True
+    print(st.session_state.rag_config)
 
-if "messages_rag" not in st.session_state and "db_created" in st.session_state:
+if "messages_rag" not in st.session_state and st.session_state.rag_config:
     st.session_state["messages_rag"] = [{"role": "assistant", "content": "How can I help you about your document?"}]
 
 ### Write Message History
@@ -92,15 +104,13 @@ if "messages_rag" in st.session_state:
     if prompt := st.chat_input():
         st.session_state.messages_rag.append({"role": "user", "content": prompt})
         st.chat_message("user", avatar="🧑‍💻").write(prompt)
-        response = response_rag(prompt)
+        info_from_docs = search_info(prompt)
+        expander = st.expander("Last question context")
+        expander.write(info_from_docs)
+        response = response_rag(prompt, info_from_docs)
+        #response = 'blablabla'
         st.session_state.messages_rag.append({"role": "assistant", "content": response})
         st.chat_message("assistant", avatar="🤖").write(response)
-"""
-expander = st.expander("See explanation")
-expander.write('''
-    Aca va el prompt de cada linea
-''')
-"""
 
 
 
