@@ -3,7 +3,7 @@
 Chatbot_streamlit is a simple web application for chatting with an LLM model running in Ollama using Langchain to consume the Ollama API endpoint.
 The promt created with Langchain for the chatbot adds memory to chatbot using Streamlit SessionState.
 
-![chat_bot_streamlit](Ollamachatbot.jpg)
+![chat_bot_streamlit](Ollamachatbot_start.jpg)
 
 
 
@@ -28,6 +28,13 @@ For example, to use LLama3 7b Instruct, in Windows cmd :
 ollama pull llama3:instruct 
 ```
 
+Download at least one embedding model from [here](https://www.ollama.com/library) 
+
+For example, Mxbai, in Windows cmd : 
+```bash
+ollama pull mxbai-embed-large 
+```
+
 
 ## Usage
 
@@ -40,5 +47,10 @@ Run the Streamlit web application:
 ```
 streamlit run ollama_chatbot.py
 ```
+If you want to chat with an LLM model, go to Chatbot.
+
+If you want to chat with your data, go to Chat with your PDF.
+
+![chat_bot_streamlit](Ollamachatbot_RAG.jpg)
 
 
