@@ -23,7 +23,7 @@ st.text('We will configure Ollama to test LLMs running local in simply chatbot')
 
 ollama_endpoint = st.text_input('Ollama address endpoint',
                                 #value='http://localhost:11434',
-                                value='https://8848-201-216-219-46.ngrok-free.app',
+                                value='https://f218-2800-40-35-2ed-6003-d74b-6902-7fa2.ngrok-free.app',
                                 help="Ollama API IP address")
 
 st.session_state.ollama_endpoint = ollama_endpoint

@@ -1,8 +1,4 @@
 import streamlit as st
-import pathlib
-import requests
-from langchain_community.chat_models import ChatOllama
-from langchain_community.document_loaders import PyPDFLoader
 import tempfile
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OllamaEmbeddings
@@ -12,14 +8,23 @@ from utils.langchain_utils import response_rag, search_info
 from utils.rag_utils import load_document
 
 
-
 st.title("Chat with your PDF using RAG")
 st.text(f'The model selected is {st.session_state.model}')
 
 if "rag_config" not in st.session_state:
     st.session_state['rag_config'] = False
 
-documents_loaded = False
+#Restart RAG configuration
+def restart_rag():
+    st.session_state.vectorstore.delete_collection()
+    print(st.session_state['rag_config'])
+    del st.session_state['messages_rag']
+    del st.session_state['db_created']
+    del st.session_state.vectorstore
+    st.session_state.db_created = False
+    st.session_state['rag_config'] = False
+    print(st.session_state['rag_config'])
+
 
 #Save uploaded file function
 def save_uploaded_file(uploaded_file, path):
@@ -46,7 +51,9 @@ chunk_overlap = st.number_input(label='Chunk Size',
                                 help='Set size to split documents')
 
 #Select embbeding model
-embedding_model = st.selectbox("Select one LLM model to use",st.session_state.model_list) #Select box for model selection 
+
+#Select box for model selection 
+embedding_model = st.selectbox("Select one LLM model to use",st.session_state.model_list)
 if "embedding_model" not in st.session_state:
     st.session_state['embedding_model'] = embedding_model
 
@@ -55,11 +62,13 @@ oll_embeddings = OllamaEmbeddings(base_url=st.session_state.ollama_endpoint,
                                  model=embedding_model
                                  )
 
-process_document = st.button(label='Process document', disabled=st.session_state.rag_config)
-restart = st.button(label='Restart', disabled=not(st.session_state.rag_config))
-#restart_rag = st.button(label='Restart RAG', disabled=not(st.session_state.rag_config))
+process_document_button = st.button(label='Process document', disabled=st.session_state.rag_config)
 
-if uploaded_file is not None and process_document:
+restart_button = st.button(label='Restart',
+                    disabled=not(st.session_state.rag_config),
+                    on_click=restart_rag)
+
+if uploaded_file is not None and process_document_button and not(st.session_state.rag_config):
     
     with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
         tmp_file.write(uploaded_file.getvalue())
@@ -75,8 +84,9 @@ if uploaded_file is not None and process_document:
                                                    chunk_overlap=chunk_overlap,
                                                    separators=["\n\n", "\n", " ", ""])
     splits = text_splitter.split_documents(documents)
-    #print((splits[5].page_content))
+    
     st.text('Document split complete')
+    
     # Create a vectorstore
     st.session_state.vectorstore = Chroma.from_documents(documents=splits,
                                         embedding=oll_embeddings,
@@ -84,10 +94,8 @@ if uploaded_file is not None and process_document:
                                         #persist_directory="./chroma_db"
                                         )
     print('Vector chroma complete')
-    print(st.session_state.rag_config)
     st.session_state.db_created = True
     st.session_state.rag_config = True
-    print(st.session_state.rag_config)
 
 if "messages_rag" not in st.session_state and st.session_state.rag_config:
     st.session_state["messages_rag"] = [{"role": "assistant", "content": "How can I help you about your document?"}]
@@ -108,9 +116,11 @@ if "messages_rag" in st.session_state:
         expander = st.expander("Last question context")
         expander.write(info_from_docs)
         response = response_rag(prompt, info_from_docs)
-        #response = 'blablabla'
         st.session_state.messages_rag.append({"role": "assistant", "content": response})
         st.chat_message("assistant", avatar="🤖").write(response)
+
+
+
 
 
 

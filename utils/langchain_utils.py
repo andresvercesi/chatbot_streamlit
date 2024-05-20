@@ -23,9 +23,7 @@ def search_info(query:str):
     #vectorstore = st.session_state.vectorstore
     retriever = st.session_state.vectorstore.as_retriever(search_type="similarity",
                                          search_kwargs={"k": 8})
-    
     results = (retriever.invoke(query))
-    print(results)
     return results 
     
         
@@ -55,14 +53,13 @@ def response_rag(query:str, context) ->str:
         )
     #Create a chain 
     #print(query)
-    chain = ({"context": retriever, "question": RunnablePassthrough()} 
-            |prompt
-            )
-    print(chain.invoke(query)) 
-    rag_chain = ({"context": retriever, "question": RunnablePassthrough()} 
-                |prompt 
-                |llm_model 
-                | StrOutputParser()
-                )
-    return rag_chain.invoke(query)
+    rag_chain = (prompt
+                   |llm_model
+                   |StrOutputParser()
+                   )
+    
+    return rag_chain.invoke({
+        "question":query,
+        "context":context
+    })
 
